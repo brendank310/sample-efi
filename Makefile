@@ -20,14 +20,17 @@
 
 ARCH            = $(shell uname -m | sed s,i[3456789]86,ia32,)
 
-KS_BS_OBJS            = ks/entry-bs.o 
-KS_BS_TARGET          = bootservices-ks.efi
+BSD_OBJS            = drivers/entry-bs.o 
+BSD_TARGET          = bootservices-driver.efi
 
-KS_RT_OBJS	= ks/entry-rt.o
-KS_RT_TARGET	= runtime-ks.efi
+RTD_OBJS	= drivers/entry-rt.o
+RTD_TARGET	= runtimeservices-driver.efi
 
-US_OBJS		= us/main.o
-US_TARGET	= us.efi
+APP_CPP_OBJS	= apps/cpp-test.o
+APP_CPP_TARGET	= cpp-test.efi
+
+APP_C_OBJS	= apps/main.o
+APP_C_TARGET	= c-app.efi
 
 COMMON_IINCS    = -Iinclude 
 EFI_INC         = /usr/local/include/efi
@@ -36,17 +39,18 @@ EFI_LIB         = /usr/local/lib
 GNU_EFI_LIB     = $(EFI_LIB)/gnuefi
 EFI_CRT_OBJS    = $(EFI_LIB)/crt0-efi-$(ARCH).o
 EFI_LDS         = $(EFI_LIB)/elf_$(ARCH)_efi.lds
-SUBSYS		= app
 CFLAGS          = $(COMMON_IINCS) $(EFI_IINCS) -fno-stack-protector -fpic \
 		  -fshort-wchar -mno-red-zone -Wall
+
 ifeq ($(ARCH),x86_64)
   CFLAGS += -DEFI_FUNCTION_WRAPPER
 endif
+CPPFLAGS	= $(CFLAGS) -fPIC
 
 LDFLAGS         = -nostdlib -znocombreloc -T $(EFI_LDS) -shared \
 		  -Bsymbolic -L $(EFI_LIB) -L $(GNU_EFI_LIB) $(EFI_CRT_OBJS)
 
-all: bootservicesdrv.efi runtimedrv.efi app.efi
+all: bootservices-driver.efi runtimeservices-driver.efi c-app.efi cpp-test.efi
 
 clean:
 	rm *.so
@@ -54,29 +58,34 @@ clean:
 	rm ks/*.o
 	rm us/*.o
 
-bootservicesdrv.so: $(KS_BS_OBJS)
-	SUBSYS=bsdrv
-	ld $(LDFLAGS) $(KS_BS_OBJS) -o $@ -lefi -lgnuefi
+bootservices-driver.so: $(BSD_OBJS)
+	ld $(LDFLAGS) $(BSD_OBJS) -o $@ -lefi -lgnuefi
 
-runtimedrv.so: $(KS_RT_OBJS)
-	SUBSYS=rtdrv
-	ld $(LDFLAGS) $(KS_RT_OBJS) -o $@ -lefi -lgnuefi
+runtimeservices-driver.so: $(RTD_OBJS)
+	ld $(LDFLAGS) $(RTD_OBJS) -o $@ -lefi -lgnuefi
 
-app.so: $(US_OBJS)
-	SUBSYS=app
-	ld $(LDFLAGS) $(US_OBJS) -o $@ -lefi -lgnuefi
+cpp-test.so: $(APP_CPP_OBJS)
+	ld $(LDFLAGS) $(APP_CPP_OBJS) -o $@ -lefi -lgnuefi
 
-bootservicesdrv.efi: bootservicesdrv.so
+c-app.so: $(APP_C_OBJS)
+	ld $(LDFLAGS) $(APP_C_OBJS) -o $@ -lefi -lgnuefi
+
+bootservices-driver.efi: bootservices-driver.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-bsdrv-$(ARCH) $^ $@
 
-runtimedrv.efi: runtimedrv.so
+runtimeservices-driver.efi: runtimeservices-driver.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-rtdrv-$(ARCH) $^ $@
 
-app.efi: app.so
+cpp-test.efi: cpp-test.so
+	objcopy -j .text -j .sdata -j .data -j .dynamic \
+		-j .dynsym  -j .rel -j .rela -j .reloc \
+		--target=efi-app-$(ARCH) $^ $@
+
+c-app.efi: c-app.so
 	objcopy -j .text -j .sdata -j .data -j .dynamic \
 		-j .dynsym  -j .rel -j .rela -j .reloc \
 		--target=efi-app-$(ARCH) $^ $@
