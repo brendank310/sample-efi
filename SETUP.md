@@ -5,11 +5,26 @@ boot from UEFI. YMMV when using it on different platforms. I don't plan on
 adding support for a bunch of platforms, but welcome any contributions that
 provide such support.
 
-Environemnt
+Environment
 =====
-*VMWare VM with Ubuntu 16.04 x64 installed, with build-essentials also
+* VMWare VM with Ubuntu 16.04 x64 installed, with build-essentials also
  installed (sudo apt-get install build-essentials)
-*VMWare VM with a minimal disk (mine is around 3GB) for the UEFI environment
+* VMWare VM with a minimal disk (mine is around 3GB) for the UEFI environment
+
+Ubuntu VM
+-----
+Install an Ubuntu 16.04 VM, and add build-essentials:
+```
+sudo apt-get install build-essential git
+```
+Download the latest gnu-efi, build, and install it:
+```
+git clone git://git.code.sf.net/p/gnu-efi/code gnu-efi
+pushd gnu-efi
+git checkout -b v3.0.4 3.0.4
+make
+sudo make install
+```
 
 UEFI VM
 -----
