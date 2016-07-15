@@ -37,7 +37,8 @@ gdisk /dev/sda
 You'll want to create a GUID partition table, using the `o` option. After the
 GPT is created, you'll add a new partition, using `n`. The size defaults are
 fine, and the partition type will be ef00 for EFI. Write the changes to disk
-with `w` and shutdown.
+with `w`. Create a FAT32 filesystem within the newly created partition, using
+'mkfs.msdos -F 32 /dev/sda1'. Shutdown the VM.
 
 Remove the GParted live CD from the VM, and open up the VM's configuration
 file in a text editor:
